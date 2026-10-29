@@ -123,9 +123,7 @@ QCoro::Task<void> LlmPostProcessor::sendCompletion(PendingRequest request)
                                 {{"role", "user"}, {"content", userPrompt}}}},
                               {"model", model},
                               {"reasoning_effort", "low"},
-                              {"extra_body", {"thinking", {"type", "enabled"}}},
                               {"temperature", 0.1},
-                              {"max_tokens", 2000},
                               {"stream", false}};
     if (provider.managedLocalService) {
         payload["chat_template_kwargs"] = {{"enable_thinking", false}};

@@ -15,6 +15,8 @@ set(CMAKE_AUTORCC ON)
 
 project(Zenny VERSION 0.15.0 DESCRIPTION "Voice input method")
 
+include(GNUInstallDirs)
+
 find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Core Gui Multimedia Network Svg Sql WebSockets LinguistTools)
 find_package(LibArchive REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
@@ -133,7 +135,21 @@ add_subdirectory(examples)
 
 include(InstallRequiredSystemLibraries)
 
-set(CPACK_GENERATOR "NSIS")
+if(UNIX AND NOT APPLE)
+    set(CPACK_GENERATOR "DEB")
+    set(CPACK_DEBIAN_PACKAGE_NAME "zenny")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "xiaodaxia <xiaozisheng2008@hotmail.com>")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "utils")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE
+        "https://github.com/xiaodaxia-2008/Zenny")
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS
+        "ffmpeg, libqt6multimedia6, libqt6svg6, libqt6sql6-sqlite, libqt6websockets6, libarchive13, libopencv-core410, libopencv-imgproc410, libxtst6")
+else()
+    set(CPACK_GENERATOR "NSIS")
+endif()
 set(CPACK_PACKAGE_NAME "${PROJECT_NAME}")
 set(CPACK_PACKAGE_VENDOR "Zenny")
 set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
@@ -158,4 +174,6 @@ set(CPACK_NSIS_DELETE_ICONS_EXTRA
 )
 
 set(CPACK_COMPONENTS_ALL Runtime)
+set(CPACK_INSTALL_CMAKE_PROJECTS
+    "${CMAKE_BINARY_DIR};${PROJECT_NAME};Runtime;/")
 include(CPack)

@@ -7,6 +7,7 @@ Zenny-*.exe
 vcpkg_installed/
 *.bz2
 *.tar
+*.deb
 *.lib
 third_parties/opencv/
 third_parties/onnxruntime/

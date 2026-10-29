@@ -181,8 +181,46 @@ target_compile_definitions(Zenny PRIVATE
 qt_deploy(TARGET Zenny COMPONENT Runtime)
 
 install(TARGETS Zenny
-    COMPONENT Runtime
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
+    BUNDLE DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT Runtime
 )
+
+if(UNIX AND NOT APPLE)
+    set_target_properties(Zenny PROPERTIES
+        INSTALL_RPATH "$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+
+    install(FILES
+        "${PROJECT_SOURCE_DIR}/resources/zenny.desktop"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+        COMPONENT Runtime
+    )
+    install(FILES
+        "${PROJECT_SOURCE_DIR}/resources/icons/icon.png"
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/1024x1024/apps
+        RENAME zenny.png
+        COMPONENT Runtime
+    )
+
+    if(EXISTS "${ZENNY_ONNXRUNTIME_ROOT}/lib/libonnxruntime.so.1.29.0")
+        install(FILES
+            "${ZENNY_ONNXRUNTIME_ROOT}/lib/libonnxruntime.so.1.29.0"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            COMPONENT Runtime
+        )
+        install(FILES
+            "${ZENNY_ONNXRUNTIME_ROOT}/lib/libonnxruntime.so.1.29.0"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RENAME libonnxruntime.so.1
+            COMPONENT Runtime
+        )
+        install(FILES
+            "${ZENNY_ONNXRUNTIME_ROOT}/lib/libonnxruntime.so.1.29.0"
+            DESTINATION ${CMAKE_INSTALL_LIBDIR}
+            RENAME libonnxruntime.so
+            COMPONENT Runtime
+        )
+    endif()
+endif()
 
 # ── Development symlinks ─────────────────────────────────────────
 # Create a directory symlink in the binary output so models are

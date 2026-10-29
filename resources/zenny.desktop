@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Zenny
+Comment=Local voice input method
+Exec=Zenny
+Icon=zenny
+Terminal=false
+Categories=Utility;Accessibility;

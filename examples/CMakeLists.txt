@@ -12,23 +12,25 @@ add_executable(ZennyAsrBenchmark
 add_executable(ZennyFunAsrParallelBenchmark
     funasr_parallel_benchmark.cpp
 )
-add_executable(ZennyOcrCaptureExample
-    ocr_capture_example.cpp
-    ${PROJECT_SOURCE_DIR}/src/utils.cpp
-)
-add_executable(ZennyOcrWinRtExample
-    ocr_winrt_example.cpp
-)
 add_executable(ZennyPpOcrV6Example
     ppocrv6_ocr_example.cpp
-)
-add_executable(ZennyWinRtSpeechExample
-    winrt_speech_example.cpp
 )
 add_executable(ZennyAudioSegmentExample
     audio_segment_example.cpp
     ${PROJECT_SOURCE_DIR}/src/audio_utils.cpp
 )
+if(WIN32)
+    add_executable(ZennyOcrCaptureExample
+        ocr_capture_example.cpp
+        ${PROJECT_SOURCE_DIR}/src/utils.cpp
+    )
+    add_executable(ZennyOcrWinRtExample
+        ocr_winrt_example.cpp
+    )
+    add_executable(ZennyWinRtSpeechExample
+        winrt_speech_example.cpp
+    )
+endif()
 add_executable(ZennyLongAudioExample
     long_audio_example.cpp
     ${PROJECT_SOURCE_DIR}/src/audio_utils.cpp
@@ -127,22 +129,28 @@ target_compile_definitions(ZennyFunAsrParallelBenchmark PRIVATE
     SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
 )
 
-target_link_libraries(ZennyOcrCaptureExample
-    PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Widgets
-    spdlog::spdlog_header_only
-)
-target_compile_definitions(ZennyOcrCaptureExample PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+if(WIN32)
+    target_link_libraries(ZennyOcrCaptureExample
+        PRIVATE
+        Qt6::Core
+        Qt6::Gui
+        Qt6::Widgets
+        spdlog::spdlog_header_only
+    )
+    target_compile_definitions(ZennyOcrCaptureExample PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+endif()
 
-target_link_libraries(ZennyOcrWinRtExample
-    PRIVATE
-    windowsapp
-)
-target_compile_definitions(ZennyOcrWinRtExample PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+if(WIN32)
+    target_link_libraries(ZennyOcrWinRtExample
+        PRIVATE
+        windowsapp
+    )
+    target_compile_definitions(ZennyOcrWinRtExample PRIVATE SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE)
+endif()
 
-find_package(Clipper2 CONFIG REQUIRED)
+if(ZENNY_PPOCRV6_OPENCV_TARGETS AND NOT TARGET Clipper2::Clipper2)
+    find_package(Clipper2 CONFIG REQUIRED)
+endif()
 
 target_link_libraries(ZennyPpOcrV6Example PRIVATE Qt6::Core Qt6::Gui)
 target_include_directories(ZennyPpOcrV6Example PRIVATE ${PROJECT_SOURCE_DIR}/src)
@@ -175,10 +183,12 @@ if(ZENNY_PPOCRV6_OPENCV_TARGETS)
     endif()
 endif()
 
-target_link_libraries(ZennyWinRtSpeechExample
-    PRIVATE
-    windowsapp
-)
+if(WIN32)
+    target_link_libraries(ZennyWinRtSpeechExample
+        PRIVATE
+        windowsapp
+    )
+endif()
 
 target_link_libraries(ZennyAudioSegmentExample
     PRIVATE
@@ -253,10 +263,12 @@ target_include_directories(ZennyAsrBenchmark PRIVATE
     ${PROJECT_SOURCE_DIR}/src
     ${PROJECT_SOURCE_DIR}/third_parties/KDToolBox
 )
-target_include_directories(ZennyOcrCaptureExample PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-    ${PROJECT_SOURCE_DIR}/third_parties/KDToolBox
-)
-target_include_directories(ZennyOcrWinRtExample PRIVATE
-    ${PROJECT_SOURCE_DIR}/src
-)
+if(WIN32)
+    target_include_directories(ZennyOcrCaptureExample PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/third_parties/KDToolBox
+    )
+    target_include_directories(ZennyOcrWinRtExample PRIVATE
+        ${PROJECT_SOURCE_DIR}/src
+    )
+endif()

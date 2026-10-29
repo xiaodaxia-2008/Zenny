@@ -2,6 +2,7 @@
 #include "app_config.h"
 #include "logging.h"
 
+#include <QGuiApplication>
 #include <QHotkey>
 #include <QKeySequence>
 
@@ -22,6 +23,15 @@ void VoiceHotkey::registerShortcuts()
 {
     if (!QHotkey::isPlatformSupported()) {
         SPDLOG_WARN("Global hotkeys are not supported on this platform");
+        return;
+    }
+
+    // The offscreen plugin reports X11 support but provides no display, which
+    // makes QHotkey crash while translating key codes.
+    const QString platform = QGuiApplication::platformName();
+    if (platform == QLatin1String("offscreen")) {
+        SPDLOG_DEBUG("Skipping global hotkeys on headless platform {}",
+                     platform.toStdString());
         return;
     }
 

@@ -11,7 +11,6 @@
 #include <clipper2/clipper.h>
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
-#include <opencv2/geometry/2d.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>
@@ -65,9 +64,10 @@ Ort::SessionOptions sessionOptions()
     return options;
 }
 
-std::basic_string<ORTCHAR_T> modelPath(const QString &path)
+template <typename CharT>
+std::basic_string<CharT> modelPath(const QString &path)
 {
-    if constexpr (std::is_same_v<ORTCHAR_T, wchar_t>) {
+    if constexpr (std::is_same_v<CharT, wchar_t>) {
         return path.toStdWString();
     }
     else {
@@ -536,16 +536,16 @@ bool PpOcrV6OcrRecognizer::ensureInitialized()
                 : dir + QStringLiteral("/ppocrv6_keys.txt");
         m_impl->detector = std::make_unique<Ort::Session>(
             m_impl->environment,
-            modelPath(dir + QStringLiteral("/det.onnx")).c_str(),
+            modelPath<ORTCHAR_T>(dir + QStringLiteral("/det.onnx")).c_str(),
             sessionOptions());
         m_impl->recognizer = std::make_unique<Ort::Session>(
             m_impl->environment,
-            modelPath(dir + QStringLiteral("/rec.onnx")).c_str(),
+            modelPath<ORTCHAR_T>(dir + QStringLiteral("/rec.onnx")).c_str(),
             sessionOptions());
         const QString clsPath = dir + QStringLiteral("/cls.onnx");
         if (QFileInfo::exists(clsPath)) {
             m_impl->classifier = std::make_unique<Ort::Session>(
-                m_impl->environment, modelPath(clsPath).c_str(),
+                m_impl->environment, modelPath<ORTCHAR_T>(clsPath).c_str(),
                 sessionOptions());
         }
         m_impl->dictionary = loadDictionary(keys);

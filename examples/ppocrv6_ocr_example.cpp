@@ -36,7 +36,6 @@
 #ifdef HAVE_OPENCV
 #include <clipper2/clipper.h>
 #include <opencv2/core.hpp>
-#include <opencv2/geometry/2d.hpp>
 #include <opencv2/imgproc.hpp>
 #endif
 
@@ -101,9 +100,10 @@ struct AngleResult
     float score = 0.0F;
 };
 
-std::basic_string<ORTCHAR_T> toOrtPath(const std::string &value)
+template <typename CharT>
+std::basic_string<CharT> toOrtPath(const std::string &value)
 {
-    if constexpr (std::is_same_v<ORTCHAR_T, wchar_t>) {
+    if constexpr (std::is_same_v<CharT, wchar_t>) {
         return QString::fromUtf8(value.c_str()).toStdWString();
     }
     else {
@@ -685,13 +685,12 @@ int main(int argc, char *argv[])
                   : std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/rec.onnx",
         std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/rec.onnx");
     const std::string clsPath =
-        argc >= 6 ? argv[5]
-                  : findModel(std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/cls.onnx",
-                              "");
+        argc >= 6
+            ? argv[5]
+            : findModel(std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/cls.onnx", "");
     const std::string keysPath =
-        argc >= 5
-            ? argv[4]
-            : std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/ppocrv6_keys2.txt";
+        argc >= 5 ? argv[4]
+                  : std::string(ZENNY_PPOCRV6_MODEL_DIR) + "/ppocrv6_keys2.txt";
 
     QFileInfo imageInfo(QString::fromStdString(imagePath));
     if (!imageInfo.exists()) {
@@ -716,15 +715,18 @@ int main(int argc, char *argv[])
 #else
     try {
         Ort::Env environment(ORT_LOGGING_LEVEL_WARNING, "ppocrv6");
-        Ort::Session detSession(environment, toOrtPath(detPath).c_str(),
+        Ort::Session detSession(environment,
+                                toOrtPath<ORTCHAR_T>(detPath).c_str(),
                                 sessionOptions());
-        Ort::Session recSession(environment, toOrtPath(recPath).c_str(),
+        Ort::Session recSession(environment,
+                                toOrtPath<ORTCHAR_T>(recPath).c_str(),
                                 sessionOptions());
         std::unique_ptr<Ort::Session> clsSession;
 #ifdef HAVE_OPENCV
         if (QFileInfo::exists(QString::fromStdString(clsPath))) {
             clsSession = std::make_unique<Ort::Session>(
-                environment, toOrtPath(clsPath).c_str(), sessionOptions());
+                environment, toOrtPath<ORTCHAR_T>(clsPath).c_str(),
+                sessionOptions());
         }
 #endif
         const auto dictionary = loadDictionary(keysPath);

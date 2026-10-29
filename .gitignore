@@ -16,7 +16,7 @@ cmake-build-*/
 .codegraph/
 .mindfs/
 Models/
-models/ppocrv6_small/
+models/
 temp/
 CMakeUserPresets.json
 teact/train_data/

@@ -7,18 +7,28 @@
 #include <QStatusBar>
 #include <QString>
 
+#include <QPlainTextEdit>
 #include <memory>
 #include <mutex>
 #include <spdlog/sinks/base_sink.h>
+#include <spdlog/sinks/qt_sinks.h>
 #include <spdlog/sinks/rotating_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <QPlainTextEdit>
-#include <spdlog/sinks/qt_sinks.h>
 
 namespace zenny
 {
 namespace
 {
+
+// spdlog::register_or_replace() only exists since 1.15.3; emulate it so
+// older system packages (e.g. Debian's 1.15.2) keep working.
+void registerLogger(const std::shared_ptr<spdlog::logger> &logger)
+{
+    if (spdlog::get(logger->name())) {
+        spdlog::drop(logger->name());
+    }
+    spdlog::register_logger(logger);
+}
 
 class StatusBarSink final : public spdlog::sinks::base_sink<std::mutex>
 {
@@ -86,13 +96,13 @@ void installStatusBarLogger(QStatusBar *statusBar)
     logger->sinks().push_back(statusBarSink);
     logger->sinks().push_back(getFileSink());
     logger->flush_on(spdlog::level::info);
-    spdlog::register_or_replace(logger);
+    registerLogger(logger);
 }
 
 void installLogPanelSink(QPlainTextEdit *textEdit)
 {
-    auto sink = std::make_shared<spdlog::sinks::qt_sink_mt>(
-        textEdit, "appendPlainText");
+    auto sink = std::make_shared<spdlog::sinks::qt_sink_mt>(textEdit,
+                                                            "appendPlainText");
     sink->set_pattern("%H:%M:%S [%n] [%l] %v");
     sink->set_level(spdlog::level::debug);
 
@@ -112,7 +122,7 @@ void initLogger()
     logger->sinks().push_back(terminal_sink);
     logger->set_level(spdlog::level::debug);
     logger->flush_on(spdlog::level::debug);
-    spdlog::register_or_replace(logger);
+    registerLogger(logger);
     spdlog::set_default_logger(logger);
 }
 } // namespace zenny

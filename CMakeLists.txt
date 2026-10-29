@@ -19,13 +19,20 @@ find_package(Qt6 CONFIG REQUIRED COMPONENTS Widgets Core Gui Multimedia Network 
 find_package(LibArchive REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(nlohmann_json CONFIG REQUIRED)
-find_package(Clipper2 CONFIG REQUIRED)
+# Clipper2 is only needed by the PP-OCRv6 polygon post-processing path,
+# which is enabled when both onnxruntime and OpenCV are available.
+find_package(Clipper2 CONFIG QUIET)
 
 if(WIN32)
     include(cmake/OnnxRuntimeRelease.cmake OPTIONAL)
     include(cmake/OpenCvRelease.cmake OPTIONAL)
 else()
     find_package(onnxruntime CONFIG QUIET)
+    if(NOT TARGET onnxruntime
+       AND NOT TARGET onnxruntime::onnxruntime
+       AND NOT TARGET ONNXRuntime::onnxruntime)
+        include(cmake/OnnxRuntimeRelease.cmake OPTIONAL)
+    endif()
     find_package(OpenCV QUIET COMPONENTS core imgproc)
 endif()
 
@@ -48,22 +55,23 @@ elseif(onnxruntime_FOUND AND onnxruntime_LIBRARIES)
     set(ZENNY_PPOCRV6_ORT_TARGET zenny_onnxruntime)
 endif()
 
-set(ZENNY_PPOCRV6_OPENCV_TARGETS "")
-if(ZENNY_OPENCV_FOUND)
-    set(ZENNY_PPOCRV6_OPENCV_TARGETS zenny_opencv_world)
-elseif(TARGET OpenCV::opencv_core AND TARGET OpenCV::opencv_imgproc)
-    set(ZENNY_PPOCRV6_OPENCV_TARGETS
-        OpenCV::opencv_core OpenCV::opencv_imgproc)
-elseif(TARGET opencv_core AND TARGET opencv_imgproc)
-    set(ZENNY_PPOCRV6_OPENCV_TARGETS opencv_core opencv_imgproc)
-elseif(OpenCV_FOUND AND OpenCV_LIBS)
-    add_library(zenny_opencv INTERFACE)
-    if(OpenCV_INCLUDE_DIRS)
-        target_include_directories(zenny_opencv INTERFACE
-            ${OpenCV_INCLUDE_DIRS})
+if(NOT ZENNY_PPOCRV6_OPENCV_TARGETS)
+    if(ZENNY_OPENCV_FOUND)
+        set(ZENNY_PPOCRV6_OPENCV_TARGETS zenny_opencv_world)
+    elseif(TARGET OpenCV::opencv_core AND TARGET OpenCV::opencv_imgproc)
+        set(ZENNY_PPOCRV6_OPENCV_TARGETS
+            OpenCV::opencv_core OpenCV::opencv_imgproc)
+    elseif(TARGET opencv_core AND TARGET opencv_imgproc)
+        set(ZENNY_PPOCRV6_OPENCV_TARGETS opencv_core opencv_imgproc)
+    elseif(OpenCV_FOUND AND OpenCV_LIBS)
+        add_library(zenny_opencv INTERFACE)
+        if(OpenCV_INCLUDE_DIRS)
+            target_include_directories(zenny_opencv INTERFACE
+                ${OpenCV_INCLUDE_DIRS})
+        endif()
+        target_link_libraries(zenny_opencv INTERFACE ${OpenCV_LIBS})
+        set(ZENNY_PPOCRV6_OPENCV_TARGETS zenny_opencv)
     endif()
-    target_link_libraries(zenny_opencv INTERFACE ${OpenCV_LIBS})
-    set(ZENNY_PPOCRV6_OPENCV_TARGETS zenny_opencv)
 endif()
 
 include(FetchContent)
@@ -90,6 +98,25 @@ set(QCORO_WITH_QTQML OFF CACHE BOOL "" FORCE)
 set(QCORO_WITH_QML OFF CACHE BOOL "" FORCE)
 set(QCORO_WITH_QTTEST OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(QCoro)
+
+# Clipper2 is required by PP-OCRv6 polygon post-processing. Prefer a system
+# package (vcpkg on Windows); otherwise fetch the upstream sources.
+if(ZENNY_PPOCRV6_ORT_TARGET AND ZENNY_PPOCRV6_OPENCV_TARGETS
+   AND NOT TARGET Clipper2::Clipper2)
+    FetchContent_Declare(Clipper2
+        URL https://codeload.github.com/AngusJohnson/Clipper2/zip/refs/tags/Clipper2_1.5.4
+        SOURCE_SUBDIR CPP
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    )
+    set(CLIPPER2_TESTS OFF CACHE BOOL "" FORCE)
+    set(CLIPPER2_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(CLIPPER2_UTILS OFF CACHE BOOL "" FORCE)
+    set(CLIPPER2_USINGZ OFF CACHE STRING "" FORCE)
+    FetchContent_MakeAvailable(Clipper2)
+    if(TARGET Clipper2 AND NOT TARGET Clipper2::Clipper2)
+        add_library(Clipper2::Clipper2 ALIAS Clipper2)
+    endif()
+endif()
 
 include(cmake/QtDeploy.cmake)
 include(cmake/SherpaOnnxRelease.cmake)

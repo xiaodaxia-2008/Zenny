@@ -2,6 +2,12 @@ macro(qt_deploy)
     set(oneValueArgs TARGET COMPONENT)
     cmake_parse_arguments(QT_DEPLOY "" "${oneValueArgs}" "" ${ARGN})
 
+    if(NOT WIN32)
+        # Qt deployment is handled by the platform package manager on
+        # Linux/macOS; there is no windeployqt step there.
+        return()
+    endif()
+
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS ${QT_BINARY_DIR})
     message(STATUS "windeployqt: ${WINDEPLOYQT_EXECUTABLE}")
 

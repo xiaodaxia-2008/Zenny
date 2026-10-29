@@ -1,7 +1,6 @@
 qt_standard_project_setup(I18N_TRANSLATED_LANGUAGES zh)
 
 add_executable(Zenny WIN32
-    ${PROJECT_SOURCE_DIR}/resources/misc/app.rc
     ${PROJECT_SOURCE_DIR}/resources/resources.qrc
     main.cpp
     single_instance.cpp
@@ -61,7 +60,6 @@ add_executable(Zenny WIN32
     clean_text.h
     ocr_recognizer.cpp
     ocr_recognizer.h
-    ppocrv6_ocr_recognizer.h
     speech_recognizer.h
     speech_recognizer.cpp
     local_ai_api_server.h
@@ -103,6 +101,12 @@ qt_add_translations(Zenny
     LUPDATE_OPTIONS -no-obsolete
 )
 
+if(WIN32)
+    target_sources(Zenny PRIVATE
+        ${PROJECT_SOURCE_DIR}/resources/misc/app.rc
+    )
+endif()
+
 target_link_libraries(Zenny
     PRIVATE
     Qt6::Widgets
@@ -126,8 +130,12 @@ target_link_libraries(Zenny
 qcoro_enable_coroutines(Zenny)
 
 if(ZENNY_PPOCRV6_ORT_TARGET AND ZENNY_PPOCRV6_OPENCV_TARGETS)
+    if(NOT TARGET Clipper2::Clipper2)
+        message(FATAL_ERROR
+            "PP-OCRv6 post-processing requires Clipper2 (find_package(Clipper2 CONFIG))")
+    endif()
     set(ZENNY_PPOCRV6_ENABLED TRUE)
-    target_sources(Zenny PRIVATE ppocrv6_ocr_recognizer.cpp)
+    target_sources(Zenny PRIVATE ppocrv6_ocr_recognizer.cpp ppocrv6_ocr_recognizer.h)
     target_link_libraries(Zenny PRIVATE
         ${ZENNY_PPOCRV6_ORT_TARGET}
         ${ZENNY_PPOCRV6_OPENCV_TARGETS}
@@ -149,6 +157,13 @@ elseif(UNIX)
     target_sources(Zenny PRIVATE
         linux/platform_utils.cpp
     )
+    find_package(X11 QUIET)
+    find_library(XTST_LIBRARY NAMES Xtst libXtst.so.6)
+    if(X11_FOUND AND X11_X11_LIB AND XTST_LIBRARY)
+        target_include_directories(Zenny PRIVATE ${X11_X11_INCLUDE_PATH})
+        target_link_libraries(Zenny PRIVATE ${X11_X11_LIB} ${XTST_LIBRARY})
+        target_compile_definitions(Zenny PRIVATE ZENNY_HAS_XTEST)
+    endif()
 endif()
 
 target_include_directories(Zenny PRIVATE

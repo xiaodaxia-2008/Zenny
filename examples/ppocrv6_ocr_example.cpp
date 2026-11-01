@@ -36,6 +36,9 @@
 #ifdef HAVE_OPENCV
 #include <clipper2/clipper.h>
 #include <opencv2/core.hpp>
+#if __has_include(<opencv2/geometry/2d.hpp>)
+#include <opencv2/geometry/2d.hpp>
+#endif
 #include <opencv2/imgproc.hpp>
 #endif
 

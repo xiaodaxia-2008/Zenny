@@ -11,6 +11,9 @@
 #include <clipper2/clipper.h>
 #include <onnxruntime_cxx_api.h>
 #include <opencv2/core.hpp>
+#if __has_include(<opencv2/geometry/2d.hpp>)
+#include <opencv2/geometry/2d.hpp>
+#endif
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>

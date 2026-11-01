@@ -13,7 +13,7 @@ set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-project(Zenny VERSION 0.15.0 DESCRIPTION "Voice input method")
+project(Zenny VERSION 0.16.0 DESCRIPTION "Voice input method")
 
 include(GNUInstallDirs)
 
